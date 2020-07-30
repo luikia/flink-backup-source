@@ -13,6 +13,8 @@ public class BinLogRowData implements Serializable {
 
     public static final TypeInformation<BinLogRowData> TYPE = Types.GENERIC(BinLogRowData.class);
 
+    private static final long serialVersionUID = 1L;
+
     private String database;
 
     private String table;

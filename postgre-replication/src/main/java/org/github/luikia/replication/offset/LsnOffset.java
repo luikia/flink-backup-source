@@ -1,13 +1,12 @@
 package org.github.luikia.replication.offset;
 
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.github.luikia.offset.Offset;
 import org.postgresql.replication.LogSequenceNumber;
 
-public class LsnOffset implements Offset {
+public class LsnOffset extends Offset {
 
-    private static final Gson g = new Gson();
+    private static final long serialVersionUID = 1L;
 
     private String lsn;
 

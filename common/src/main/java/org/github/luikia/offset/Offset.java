@@ -1,9 +1,13 @@
 package org.github.luikia.offset;
 
+import com.google.gson.Gson;
+
 import java.io.Serializable;
 
-public interface Offset extends Serializable {
+public abstract class Offset implements Serializable {
 
-    String toJsonString();
+    protected static final Gson g = new Gson();
+
+    public abstract String toJsonString();
 
 }

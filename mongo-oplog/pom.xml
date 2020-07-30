@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.github.luikia.backupsource</groupId>
         <artifactId>flink-backup-source</artifactId>
+        <groupId>org.github.luikia.backupsource</groupId>
         <version>0.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>mysql-binlog</artifactId>
+    <artifactId>mongo-oplog</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.github.luikia.backupsource</groupId>
@@ -17,10 +17,11 @@
             <version>0.0.1</version>
         </dependency>
         <dependency>
-            <groupId>com.github.shyiko</groupId>
-            <artifactId>mysql-binlog-connector-java</artifactId>
-            <version>${shyiko.version}</version>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${mongo.driver.version}</version>
         </dependency>
     </dependencies>
+
 
 </project>

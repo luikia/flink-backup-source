@@ -1,15 +1,14 @@
 package org.github.luikia.binlog.offset;
 
 import com.github.shyiko.mysql.binlog.event.RotateEventData;
-import com.google.gson.Gson;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.github.luikia.offset.Offset;
 
 @Data
-public class BinLogOffset implements Offset {
+public class BinLogOffset extends Offset {
 
-    private static final Gson g = new Gson();
+    private static final long serialVersionUID = 1L;
 
     private String binlogFilename;
 
