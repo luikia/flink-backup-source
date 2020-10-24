@@ -23,8 +23,12 @@ public class OplogClient {
 
     private static final List<BsonDocument> BASE_FILTERS = Arrays.asList(
             BsonDocument.parse("{\"op\":{\"$in\":[\"i\",\"u\",\"d\"]}}"),
-            BsonDocument.parse("{\"ns\":{\"$not\":{\"$regex\":\"^(local|admin|config).*\"}}}")
+            BsonDocument.parse("{\"ns\":{\"$not\":/admin.*/}}"),
+            BsonDocument.parse("{\"ns\":{\"$not\":/local.*/}}"),
+            BsonDocument.parse("{\"ns\":{\"$not\":/config.*/}}")
+            //BsonDocument.parse("{\"ns\":{\"$and\":[{\"$not\":/admin.*/},{\"$not\":/local.*/},{\"$not\":/config.*/}]}}")
     );
+
     private final MongoClient mongoClient;
     private Long offset;
     private Consumer<OplogData> callback;
@@ -70,7 +74,7 @@ public class OplogClient {
         MongoDatabase db = mongoClient.getDatabase("local");
         Optional<String> nameOp = StreamSupport.stream(db.listCollectionNames().spliterator(), false)
                 .filter(s -> StringUtils.startsWithIgnoreCase(s, "oplog")).findFirst();
-        return nameOp.isPresent() ? db.getCollection(nameOp.get()) : null;
+        return nameOp.map(db::getCollection).orElse(null);
     }
 
     private BsonDocument query(BsonTimestamp ts) {
