@@ -1,6 +1,8 @@
 package org.github.luikia.replication;
 
 import com.google.gson.Gson;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.github.luikia.replication.format.ReplicationData;
 
 public class JsonReplicationSourceFunction extends ReplicationSourceFunction<String> {
@@ -16,5 +18,10 @@ public class JsonReplicationSourceFunction extends ReplicationSourceFunction<Str
     @Override
     public String format(ReplicationData data) {
         return g.toJson(data, ReplicationData.class);
+    }
+
+    @Override
+    public TypeInformation<String> getProducedType() {
+        return Types.STRING;
     }
 }

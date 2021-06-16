@@ -12,7 +12,7 @@ import org.github.luikia.replication.offset.LsnOffset;
 import java.util.Objects;
 
 @Slf4j
-public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<ReplicationData, LsnOffset> {
+public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<T, LsnOffset> {
     private static final long serialVersionUID = 1L;
 
     private String url;
@@ -46,7 +46,7 @@ public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<
     }
 
     @Override
-    public void run(SourceFunction.SourceContext<ReplicationData> ctx) throws Exception {
+    public void run(SourceFunction.SourceContext<T> ctx) throws Exception {
         final Object lock = ctx.getCheckpointLock();
         client.setCallBack(r -> {
             synchronized (lock) {
@@ -55,7 +55,7 @@ public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<
                 else
                     this.startLsn.setLsn(r.getLsn());
                 if (Objects.nonNull(r.getChanges()))
-                    ctx.collect(r);
+                    ctx.collect(format(r));
             }
         });
         if (this.getLock()) {

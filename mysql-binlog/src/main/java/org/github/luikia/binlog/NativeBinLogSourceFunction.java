@@ -1,8 +1,11 @@
 package org.github.luikia.binlog;
 
 
+import lombok.NoArgsConstructor;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.github.luikia.binlog.format.BinLogRowData;
 
+@NoArgsConstructor
 public class NativeBinLogSourceFunction extends BinlogBaseSourceFunction<BinLogRowData> {
 
     private static final long serialVersionUID = 1L;
@@ -14,5 +17,10 @@ public class NativeBinLogSourceFunction extends BinlogBaseSourceFunction<BinLogR
     @Override
     public BinLogRowData format(BinLogRowData data) {
         return data;
+    }
+
+    @Override
+    public TypeInformation<BinLogRowData> getProducedType() {
+        return BinLogRowData.TYPE;
     }
 }

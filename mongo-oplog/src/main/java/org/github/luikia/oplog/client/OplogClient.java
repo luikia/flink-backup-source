@@ -5,6 +5,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -51,7 +52,7 @@ public class OplogClient {
         if (Objects.isNull(oplogDocument)) {
             throw new Exception("server oplog config error,not find oplog document");
         }
-        BsonTimestamp currentTS = Objects.isNull(offset) ? new BsonTimestamp((int) (System.currentTimeMillis() / 1000), 0) : new BsonTimestamp(offset);
+        BsonTimestamp currentTS = Objects.isNull(offset) ? new BsonTimestamp((int) (System.currentTimeMillis() / 1000), NumberUtils.INTEGER_ZERO) : new BsonTimestamp(offset);
         this.resultCursor = oplogDocument
                 .find(query(currentTS))
                 .batchSize(100).noCursorTimeout(true)

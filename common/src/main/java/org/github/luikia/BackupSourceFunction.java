@@ -6,6 +6,7 @@ import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.OperatorStateStore;
 import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.runtime.state.CheckpointListener;
 import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
@@ -18,17 +19,17 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public abstract class BackupSourceFunction<T,OFFSET extends Offset> extends RichParallelSourceFunction<T> implements CheckpointedFunction, CheckpointListener {
+public abstract class BackupSourceFunction<T, OFFSET extends Offset> extends RichParallelSourceFunction<T> implements CheckpointedFunction, CheckpointListener, ResultTypeQueryable<T> {
 
     protected ZkClient zkClient;
 
     private transient ListState<String> offsetState;
 
-    protected boolean getLock() {
+    protected final boolean getLock() {
         int partitionIndex = getRuntimeContext().getIndexOfThisSubtask();
-        if (Objects.isNull(this.zkClient)) {
+        if (Objects.isNull(this.zkClient))
             return true;
-        } else {
+        else {
             InterProcessMutex lock = this.zkClient.getLock();
             try {
                 while (true) {
@@ -61,32 +62,29 @@ public abstract class BackupSourceFunction<T,OFFSET extends Offset> extends Rich
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         this.offsetState.clear();
-        if (Objects.nonNull(this.getOffset()) && isRunning()) {
+        if (Objects.nonNull(this.getOffset()) && this.isRunning())
             this.offsetState.add(this.getOffset().toJsonString());
-        }
     }
 
     @Override
     public void initializeState(FunctionInitializationContext context) throws Exception {
         OperatorStateStore stateStore = context.getOperatorStateStore();
         offsetState = stateStore.getUnionListState(new ListStateDescriptor("offset", Types.STRING));
-        if (context.isRestored() && offsetState.get().iterator().hasNext() && Objects.isNull(this.getOffset())) {
+        if (context.isRestored() && offsetState.get().iterator().hasNext() && Objects.isNull(this.getOffset()))
             this.setOffset(formJson(offsetState.get().iterator().next()));
-        }
         offsetState.clear();
     }
 
     protected abstract OFFSET formJson(String json);
 
-    protected void startZKClient(){
-        if (Objects.nonNull(zkClient)) {
+    protected final void startZKClient() {
+        if (Objects.nonNull(zkClient))
             try {
                 zkClient.start();
             } catch (Exception e) {
                 log.error("zk client start error", e);
                 zkClient = null;
             }
-        }
     }
 
     public ZkClient getZkClient() {

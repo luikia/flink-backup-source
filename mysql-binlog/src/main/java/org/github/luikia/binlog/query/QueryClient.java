@@ -85,10 +85,8 @@ public class QueryClient {
     public void disconnect() throws IOException {
         if (Objects.nonNull(this.channel))
             channel.close();
-        if (this.heartbeatThread.isAlive()) {
+        if (this.heartbeatThread.isAlive())
             this.heartbeatThread.interrupt();
-        }
-
     }
 
 
@@ -100,7 +98,7 @@ public class QueryClient {
         authenticateCommand.setCollation(collation);
         this.channel.write(authenticateCommand, packetNumber);
         byte[] authenticationResult = this.channel.read();
-        if (authenticationResult[0] != (byte) 0x00 /* ok */) {
+        if (authenticationResult[0] != (byte) 0x00 /* ok */)
             if (authenticationResult[0] == (byte) 0xFF /* error */) {
                 byte[] bytes = Arrays.copyOfRange(authenticationResult, 1, authenticationResult.length);
                 ErrorPacket errorPacket = new ErrorPacket(bytes);
@@ -109,7 +107,6 @@ public class QueryClient {
             } else {
                 throw new AuthenticationException("Unexpected authentication result (" + authenticationResult[0] + ")");
             }
-        }
     }
 
     private GreetingPacket receiveGreeting() throws IOException {
@@ -133,9 +130,8 @@ public class QueryClient {
                     errorPacket.getSqlState());
         }
         while ((channel.read())[0] != (byte) 0xFE /* eof */) { /* skip */ }
-        for (byte[] bytes; (bytes = channel.read())[0] != (byte) 0xFE /* eof */; ) {
+        for (byte[] bytes; (bytes = channel.read())[0] != (byte) 0xFE /* eof */; )
             resultSet.add(new ResultSetRowPacket(bytes));
-        }
         return resultSet.toArray(new ResultSetRowPacket[resultSet.size()]);
     }
 

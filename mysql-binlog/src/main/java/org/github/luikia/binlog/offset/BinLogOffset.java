@@ -1,11 +1,16 @@
 package org.github.luikia.binlog.offset;
 
 import com.github.shyiko.mysql.binlog.event.RotateEventData;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.github.luikia.offset.Offset;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BinLogOffset extends Offset {
 
     private static final long serialVersionUID = 1L;
@@ -13,15 +18,6 @@ public class BinLogOffset extends Offset {
     private String binlogFilename;
 
     private long binlogPosition;
-
-    public BinLogOffset() {
-    }
-
-
-    private BinLogOffset(String binlogFilename, long binlogPosition) {
-        this.binlogFilename = binlogFilename;
-        this.binlogPosition = binlogPosition;
-    }
 
     private BinLogOffset(RotateEventData eventData) {
         this.binlogFilename = eventData.getBinlogFilename();

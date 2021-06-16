@@ -1,10 +1,14 @@
 package org.github.luikia.replication.format;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
+import org.github.luikia.type.LogType;
 import org.postgresql.replication.LogSequenceNumber;
 
 import java.io.Serializable;
@@ -16,9 +20,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
+import static org.github.luikia.type.LogType.*;
+
+
 @Data
+@NoArgsConstructor
 public class ReplicationData implements Serializable {
-    public static final TypeInformation<ReplicationData> TYPE = Types.GENERIC(ReplicationData.class);
+    public static final TypeInformation<ReplicationData> TYPE = Types.POJO(ReplicationData.class, ImmutableMap.of(
+            "changes", Types.LIST(ReplicationChange.TYPE),
+            "lsn", Types.STRING
+    ));
 
     private static final long serialVersionUID = 1L;
 
@@ -27,9 +38,6 @@ public class ReplicationData implements Serializable {
     private List<ReplicationChange> changes;
 
     private String lsn;
-
-    public ReplicationData() {
-    }
 
     public ReplicationData(LogSequenceNumber lsn, ByteBuffer msg) {
         this.lsn = lsn.asString();
@@ -47,9 +55,13 @@ public class ReplicationData implements Serializable {
     }
 
     @Data
-    public class ReplicationChange implements Serializable {
+    public static class ReplicationChange implements Serializable {
 
-        private String type;
+        public static final TypeInformation<ReplicationChange> TYPE = Types.GENERIC(ReplicationChange.class);
+
+        public static final Map<String, LogType> TYPE_MAP = ImmutableMap.of("insert", INSERT, "delete", DELETE, "update", UPDATE);
+
+        private LogType type;
 
         private String schema;
 
@@ -61,10 +73,10 @@ public class ReplicationData implements Serializable {
 
         private ReplicationChange(JsonElement j) {
             JsonObject json = j.getAsJsonObject();
-            this.type = json.get("kind").getAsString();
+            this.type = TYPE_MAP.getOrDefault(StringUtils.lowerCase(json.get("kind").getAsString()), OTHER);
             this.schema = json.get("schema").getAsString();
             this.table = json.get("table").getAsString();
-            if (!"delete".equalsIgnoreCase(this.type)) {
+            if (this.type != DELETE) {
                 JsonArray columnnames = json.getAsJsonArray("columnnames");
                 JsonArray columnValues = json.getAsJsonArray("columnvalues");
                 this.data = new HashedMap(columnnames.size());
@@ -72,7 +84,7 @@ public class ReplicationData implements Serializable {
                         this.data.put(columnnames.get(i).getAsString(),
                                 this.toSerializable(columnValues.get(i))));
             }
-            if (!"insert".equalsIgnoreCase(this.type)) {
+            if (this.type != INSERT) {
                 JsonArray keynames = json.get("oldkeys").getAsJsonObject().get("keynames").getAsJsonArray();
                 JsonArray keyvalues = json.get("oldkeys").getAsJsonObject().get("keyvalues").getAsJsonArray();
                 keys = new HashedMap(keynames.size());
@@ -86,15 +98,14 @@ public class ReplicationData implements Serializable {
         private Serializable toSerializable(JsonElement data) {
             if (data.isJsonPrimitive()) {
                 JsonPrimitive jsonPrimtive = data.getAsJsonPrimitive();
-                if (jsonPrimtive.isBoolean()) {
+                if (jsonPrimtive.isBoolean())
                     return jsonPrimtive.getAsBoolean();
-                } else if (jsonPrimtive.isNumber()) {
+                else if (jsonPrimtive.isNumber())
                     return jsonPrimtive.getAsNumber();
-                } else if (jsonPrimtive.isString()) {
+                else if (jsonPrimtive.isString())
                     return jsonPrimtive.getAsString();
-                } else {
+                else
                     return null;
-                }
             }
             return null;
         }

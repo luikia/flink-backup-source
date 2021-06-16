@@ -6,6 +6,7 @@ import com.github.shyiko.mysql.binlog.event.EventType;
 import com.github.shyiko.mysql.binlog.event.RotateEventData;
 import com.github.shyiko.mysql.binlog.event.TableMapEventData;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -21,6 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
+@NoArgsConstructor
 public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T, BinLogOffset> {
 
     private static final long serialVersionUID = 1L;

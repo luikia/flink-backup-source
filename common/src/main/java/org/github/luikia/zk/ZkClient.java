@@ -33,22 +33,19 @@ public class ZkClient implements Serializable {
     public void start() throws Exception {
         this.client = CuratorFrameworkFactory.newClient(url, new RetryNTimes(retryTimes, sleepMsBetweenRetries));
         this.client.start();
-        if (Objects.isNull(client.checkExists().forPath(this.path))) {
+        if (Objects.isNull(client.checkExists().forPath(this.path)))
             client.create().forPath(this.path);
-        }
     }
 
     public InterProcessMutex getLock() {
-        if(Objects.isNull(this.lock)){
+        if(Objects.isNull(this.lock))
            this.lock = new InterProcessMutex(this.client, path + "/lock");
-        }
         return this.lock;
     }
 
     public void saveOffset(Offset offset) throws Exception {
-        if (Objects.isNull(client.checkExists().forPath(this.path + "/offset"))) {
+        if (Objects.isNull(client.checkExists().forPath(this.path + "/offset")))
             client.create().forPath(this.path + "/offset");
-        }
         client.setData().forPath(this.path + "/offset", offset.toJsonString().getBytes());
     }
 

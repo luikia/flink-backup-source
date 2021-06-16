@@ -4,6 +4,8 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.github.luikia.BackupSourceFunction;
@@ -34,9 +36,8 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(conn).build();
         this.client = new OplogClient(settings);
-        if (Objects.nonNull(this.offset) && this.offset.getTs() != 0L) {
+        if (Objects.nonNull(this.offset) && this.offset.getTs() != NumberUtils.LONG_ZERO)
             this.client.setOffset(this.offset.getTs());
-        }
         this.startZKClient();
     }
 
@@ -69,14 +70,14 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
                     this.offset = new OplogOffset(r.getOffset());
                 else
                     this.offset.setTs(r.getOffset());
-                if (StringUtils.isNoneEmpty(r.getData()))
+                if (StringUtils.isNotEmpty(r.getData()))
                     ctx.collect(r);
             }
         });
         if (this.getLock()) {
             if (Objects.isNull(this.offset) && Objects.nonNull(zkClient))
                 this.offset = this.formJson(this.zkClient.getOffsetJson());
-            if (Objects.nonNull(this.offset) && this.offset.getTs() != 0L)
+            if (Objects.nonNull(this.offset) && this.offset.getTs() != NumberUtils.LONG_ZERO)
                 client.setOffset(this.offset.getTs());
             client.start();
         }
@@ -99,4 +100,8 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
         this.url = url;
     }
 
+    @Override
+    public TypeInformation<OplogData> getProducedType() {
+        return OplogData.TYPE;
+    }
 }

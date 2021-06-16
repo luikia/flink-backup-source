@@ -101,7 +101,7 @@ public class ReplicationClient {
         @Override
         public void run() {
             ReplicationClient.this.running = true;
-            while (running) {
+            while (running)
                 try {
                     ByteBuffer msg = stream.readPending();
                     ReplicationData data = new ReplicationData(stream.getLastReceiveLSN(), msg);
@@ -112,7 +112,6 @@ public class ReplicationClient {
                 } catch (Exception ex) {
                     log.error("get replication data error", ex);
                 }
-            }
             try {
                 stream.close();
             } catch (SQLException e) {
