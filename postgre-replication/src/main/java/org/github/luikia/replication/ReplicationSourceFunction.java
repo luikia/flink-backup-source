@@ -59,9 +59,7 @@ public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<
             }
         });
         if (this.getLock()) {
-            if (Objects.isNull(this.startLsn) && Objects.nonNull(zkClient)) {
-                this.startLsn = LsnOffset.fromJson(this.zkClient.getOffsetJson());
-            }
+            initOffset();
             if (Objects.nonNull(this.startLsn) && StringUtils.isNoneEmpty(this.startLsn.getLsn())) {
                 client.setStartLsn(this.startLsn.getLogSequenceNumber());
             }

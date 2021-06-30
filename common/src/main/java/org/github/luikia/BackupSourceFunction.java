@@ -1,5 +1,7 @@
 package org.github.luikia;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.flink.api.common.state.ListState;
@@ -20,8 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class BackupSourceFunction<T, OFFSET extends Offset> extends RichParallelSourceFunction<T> implements CheckpointedFunction, CheckpointListener, ResultTypeQueryable<T> {
-
+    @Getter
+    @Setter
     protected ZkClient zkClient;
+
+    protected OFFSET restoreCheckPointOffset;
 
     private transient ListState<String> offsetState;
 
@@ -70,9 +75,17 @@ public abstract class BackupSourceFunction<T, OFFSET extends Offset> extends Ric
     public void initializeState(FunctionInitializationContext context) throws Exception {
         OperatorStateStore stateStore = context.getOperatorStateStore();
         offsetState = stateStore.getUnionListState(new ListStateDescriptor("offset", Types.STRING));
-        if (context.isRestored() && offsetState.get().iterator().hasNext() && Objects.isNull(this.getOffset()))
-            this.setOffset(formJson(offsetState.get().iterator().next()));
+        if (context.isRestored() && offsetState.get().iterator().hasNext())
+            this.restoreCheckPointOffset = formJson(offsetState.get().iterator().next());
         offsetState.clear();
+    }
+
+    protected void initOffset() {
+        if (Objects.isNull(this.getOffset()))
+            if (Objects.nonNull(zkClient))
+                this.setOffset(formJson(zkClient.getOffsetJson()));
+            else if (Objects.nonNull(this.restoreCheckPointOffset))
+                this.setOffset(this.restoreCheckPointOffset);
     }
 
     protected abstract OFFSET formJson(String json);
@@ -85,13 +98,5 @@ public abstract class BackupSourceFunction<T, OFFSET extends Offset> extends Ric
                 log.error("zk client start error", e);
                 zkClient = null;
             }
-    }
-
-    public ZkClient getZkClient() {
-        return zkClient;
-    }
-
-    public void setZkClient(ZkClient zkClient) {
-        this.zkClient = zkClient;
     }
 }

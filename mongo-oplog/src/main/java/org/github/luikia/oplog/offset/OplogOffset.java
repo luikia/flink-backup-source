@@ -1,9 +1,15 @@
 package org.github.luikia.oplog.offset;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonTimestamp;
 import org.github.luikia.offset.Offset;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class OplogOffset extends Offset {
 
     private static final long serialVersionUID = 1L;
@@ -12,18 +18,6 @@ public class OplogOffset extends Offset {
 
     public OplogOffset(BsonTimestamp ts) {
         this(ts.getValue());
-    }
-
-    public OplogOffset(long ts) {
-        this.ts = ts;
-    }
-
-    public long getTs() {
-        return ts;
-    }
-
-    public void setTs(long ts) {
-        this.ts = ts;
     }
 
     @Override

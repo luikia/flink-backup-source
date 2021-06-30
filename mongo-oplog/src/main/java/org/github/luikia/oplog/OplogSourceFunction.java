@@ -75,8 +75,7 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
             }
         });
         if (this.getLock()) {
-            if (Objects.isNull(this.offset) && Objects.nonNull(zkClient))
-                this.offset = this.formJson(this.zkClient.getOffsetJson());
+            initOffset();
             if (Objects.nonNull(this.offset) && this.offset.getTs() != NumberUtils.LONG_ZERO)
                 client.setOffset(this.offset.getTs());
             client.start();

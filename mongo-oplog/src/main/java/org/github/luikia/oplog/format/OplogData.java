@@ -10,9 +10,6 @@ import org.bson.Document;
 import org.github.luikia.type.LogType;
 
 import java.io.Serializable;
-import java.util.Map;
-
-import static org.github.luikia.type.LogType.*;
 
 
 @Data
@@ -31,8 +28,6 @@ public class OplogData implements Serializable {
             .put("document", Types.STRING).build()
     );
 
-    private static final Map<String, LogType> TYPE_MAPPING = ImmutableMap.of("i", INSERT, "d", DELETE, "u", UPDATE);
-
     private Long offset;
 
     private String namespace;
@@ -48,7 +43,7 @@ public class OplogData implements Serializable {
     public OplogData(Document document) {
         this.document = document.toJson();
         this.namespace = document.getString("ns");
-        this.type = TYPE_MAPPING.get(document.getString("op"));
+        this.type = LogType.getLogTypePrefix(document.getString("op"));
         Document o = document.get("o", Document.class);
         this.id = o.getObjectId("_id").toHexString();
         this.offset = document.get("ts", BsonTimestamp.class).getValue();

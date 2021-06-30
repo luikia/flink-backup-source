@@ -1,30 +1,21 @@
 package org.github.luikia.replication.offset;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.github.luikia.offset.Offset;
 import org.postgresql.replication.LogSequenceNumber;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class LsnOffset extends Offset {
 
     private static final long serialVersionUID = 1L;
 
     private String lsn;
-
-    public LsnOffset() {
-    }
-
-    private LsnOffset(String lsn) {
-        this.lsn = lsn;
-    }
-
-    public String getLsn() {
-        return lsn;
-    }
-
-    public void setLsn(String lsn) {
-        this.lsn = lsn;
-    }
-
+    
     public LogSequenceNumber getLogSequenceNumber() {
         return LogSequenceNumber.valueOf(this.lsn);
     }

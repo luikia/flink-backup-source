@@ -1,10 +1,7 @@
 package org.github.luikia.binlog;
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
-import com.github.shyiko.mysql.binlog.event.EventHeaderV4;
-import com.github.shyiko.mysql.binlog.event.EventType;
-import com.github.shyiko.mysql.binlog.event.RotateEventData;
-import com.github.shyiko.mysql.binlog.event.TableMapEventData;
+import com.github.shyiko.mysql.binlog.event.*;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +40,8 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
 
     private BinLogOffset offset;
 
+    private boolean gtid = false;
+
     private volatile boolean running = false;
 
 
@@ -51,7 +50,6 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
         this.port = port;
         this.username = username;
         this.password = password;
-
     }
 
     @Override
@@ -59,9 +57,11 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
         tableDescMap = new ConcurrentHashMap(10);
         client = new BinaryLogClient(this.host, this.port, this.username, this.password);
         queryClient = new QueryClient(this.host, this.port, this.username, this.password);
-        if (Objects.nonNull(this.offset)) {
+        if (Objects.nonNull(this.offset) && !gtid) {
             client.setBinlogFilename(this.offset.getBinlogFilename());
             client.setBinlogPosition(this.offset.getBinlogPosition());
+        } else if (Objects.nonNull(this.offset) && gtid) {
+            client.setGtidSet(this.offset.getGtidSet());
         }
         EventDeserializer eventDeserializer = new EventDeserializer();
         eventDeserializer.setCompatibilityMode(
@@ -86,34 +86,40 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
                     } catch (Exception e) {
                         log.error("table mapping error", e);
                     }
-            } else if (event.getHeader().getEventType() == EventType.ROTATE) {
+            } else if (event.getHeader().getEventType() == EventType.ROTATE && !this.gtid) {
                 synchronized (lock) {
                     RotateEventData eventData = event.getData();
                     this.offset = BinLogOffset.of(eventData);
                 }
                 return;
-            }
-            EventHeaderV4 headerV4 = event.getHeader();
-            synchronized (lock) {
-                BinLogRowData binLogRowData = BinLogConvertUtils.convertRowData(event, tableDescMap);
-                if (Objects.nonNull(binLogRowData)) {
-                    ctx.collect(BinlogBaseSourceFunction.this.format(binLogRowData));
+            } else if (event.getHeader().getEventType() == EventType.GTID && this.gtid) {
+                synchronized (lock) {
+                    GtidEventData eventData = event.getData();
+                    this.offset = Objects.isNull(this.offset) ? BinLogOffset.of(eventData) : this.offset.mergeGtid(eventData);
                 }
-                if (headerV4.getNextPosition() != 0) {
-                    this.offset.setBinlogPosition(headerV4.getNextPosition());
+            } else {
+                EventHeaderV4 headerV4 = event.getHeader();
+                synchronized (lock) {
+                    BinLogRowData binLogRowData = BinLogConvertUtils.convertRowData(event, tableDescMap);
+                    if (Objects.nonNull(binLogRowData)) {
+                        ctx.collect(BinlogBaseSourceFunction.this.format(binLogRowData));
+                    }
+                    if (headerV4.getNextPosition() != 0 && !this.gtid) {
+                        this.offset.setBinlogPosition(headerV4.getNextPosition());
+                    }
                 }
             }
-
         });
         if (this.getLock()) {
             running = true;
-            if (Objects.isNull(this.offset) && Objects.nonNull(zkClient)) {
-                this.offset = BinLogOffset.fromJson(zkClient.getOffsetJson());
-            }
-            if (Objects.nonNull(this.offset)) {
-                client.setBinlogFilename(this.offset.getBinlogFilename());
-                client.setBinlogPosition(this.offset.getBinlogPosition());
-            }
+            initOffset();
+            if (Objects.nonNull(this.offset))
+                if (gtid)
+                    client.setGtidSet(this.offset.getGtidSet());
+                else {
+                    client.setBinlogFilename(this.offset.getBinlogFilename());
+                    client.setBinlogPosition(this.offset.getBinlogPosition());
+                }
             queryClient.connect();
             client.connect();
         }
@@ -134,16 +140,16 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
         }
     }
 
+    @Override
+    public void setOffset(BinLogOffset offset) {
+        this.offset = offset;
+    }
+
     public abstract T format(BinLogRowData data);
 
     @Override
     public BinLogOffset getOffset() {
         return offset;
-    }
-
-    @Override
-    public void setOffset(BinLogOffset offset) {
-        this.offset = offset;
     }
 
     @Override
@@ -154,5 +160,13 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
     @Override
     public BinLogOffset formJson(String json) {
         return BinLogOffset.fromJson(json);
+    }
+
+    public boolean isGtid() {
+        return gtid;
+    }
+
+    public void setGtid(boolean gtid) {
+        this.gtid = gtid;
     }
 }

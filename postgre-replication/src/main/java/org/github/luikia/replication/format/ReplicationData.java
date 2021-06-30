@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import static org.github.luikia.type.LogType.*;
+import static org.github.luikia.type.LogType.DELETE;
+import static org.github.luikia.type.LogType.INSERT;
 
 
 @Data
@@ -59,8 +60,6 @@ public class ReplicationData implements Serializable {
 
         public static final TypeInformation<ReplicationChange> TYPE = Types.GENERIC(ReplicationChange.class);
 
-        public static final Map<String, LogType> TYPE_MAP = ImmutableMap.of("insert", INSERT, "delete", DELETE, "update", UPDATE);
-
         private LogType type;
 
         private String schema;
@@ -73,7 +72,7 @@ public class ReplicationData implements Serializable {
 
         private ReplicationChange(JsonElement j) {
             JsonObject json = j.getAsJsonObject();
-            this.type = TYPE_MAP.getOrDefault(StringUtils.lowerCase(json.get("kind").getAsString()), OTHER);
+            this.type = LogType.getLogType(StringUtils.lowerCase(json.get("kind").getAsString()));
             this.schema = json.get("schema").getAsString();
             this.table = json.get("table").getAsString();
             if (this.type != DELETE) {
