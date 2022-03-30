@@ -76,19 +76,18 @@ public abstract class BackupSourceFunction<T, OFFSET extends Offset> extends Ric
         OperatorStateStore stateStore = context.getOperatorStateStore();
         offsetState = stateStore.getUnionListState(new ListStateDescriptor("offset", Types.STRING));
         if (context.isRestored() && offsetState.get().iterator().hasNext())
-            this.restoreCheckPointOffset = formJson(offsetState.get().iterator().next());
+            this.restoreCheckPointOffset = formOffsetJson(offsetState.get().iterator().next());
         offsetState.clear();
     }
 
     protected void initOffset() {
         if (Objects.isNull(this.getOffset()))
             if (Objects.nonNull(zkClient))
-                this.setOffset(formJson(zkClient.getOffsetJson()));
+                this.setOffset(formOffsetJson(zkClient.getOffsetJson()));
             else if (Objects.nonNull(this.restoreCheckPointOffset))
                 this.setOffset(this.restoreCheckPointOffset);
     }
-
-    protected abstract OFFSET formJson(String json);
+    protected abstract OFFSET formOffsetJson(String json);
 
     protected final void startZKClient() {
         if (Objects.nonNull(zkClient))

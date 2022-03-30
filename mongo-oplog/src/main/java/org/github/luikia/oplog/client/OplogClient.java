@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 @Slf4j
+@Deprecated
 public class OplogClient {
 
     private static final List<BsonDocument> BASE_FILTERS = Arrays.asList(

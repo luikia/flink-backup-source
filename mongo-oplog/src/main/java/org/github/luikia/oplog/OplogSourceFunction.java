@@ -16,6 +16,7 @@ import org.github.luikia.oplog.offset.OplogOffset;
 import java.util.Objects;
 
 @Slf4j
+@Deprecated
 public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOffset> {
 
     private static final long serialVersionUID = 1L;
@@ -57,7 +58,7 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
     }
 
     @Override
-    protected OplogOffset formJson(String json) {
+    protected OplogOffset formOffsetJson(String json) {
         return OplogOffset.fromJson(json);
     }
 
@@ -103,4 +104,6 @@ public class OplogSourceFunction extends BackupSourceFunction<OplogData, OplogOf
     public TypeInformation<OplogData> getProducedType() {
         return OplogData.TYPE;
     }
+
+
 }

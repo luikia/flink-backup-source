@@ -80,7 +80,7 @@ public abstract class ReplicationSourceFunction<T> extends BackupSourceFunction<
     }
 
     @Override
-    public LsnOffset formJson(String json) {
+    public LsnOffset formOffsetJson(String json) {
         return LsnOffset.fromJson(json);
     }
 

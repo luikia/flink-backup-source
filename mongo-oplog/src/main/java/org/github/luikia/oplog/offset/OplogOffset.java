@@ -10,6 +10,7 @@ import org.github.luikia.offset.Offset;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Deprecated
 public class OplogOffset extends Offset {
 
     private static final long serialVersionUID = 1L;

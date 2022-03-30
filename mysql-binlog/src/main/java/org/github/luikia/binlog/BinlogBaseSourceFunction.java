@@ -158,7 +158,7 @@ public abstract class BinlogBaseSourceFunction<T> extends BackupSourceFunction<T
     }
 
     @Override
-    public BinLogOffset formJson(String json) {
+    public BinLogOffset formOffsetJson(String json) {
         return BinLogOffset.fromJson(json);
     }
 
